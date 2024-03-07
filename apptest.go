@@ -8,67 +8,67 @@ import (
 	"strings"
 )
 
-
 type AppList struct {
 	Apps       []string
 	SystemApps []string
 }
 
-func (*AppList)SyncList() error {
-    return nil
-}
-
-
-
 func main() {
-    getApps()
+    apps, err := getApps()
+    if err != nil {
+        fmt.Printf("Error getting apps: %v", err)
+        return
+    }
+    fmt.Printf("System Apps: %v\nApps: %v\n", apps.SystemApps, apps.Apps)
 }
-
 
 func getApps() (out AppList, err error) {
-    
-    systemDir := os.Getenv("SystemRoot")+`\System32`
-    appDir := os.Getenv("ProgramFiles")
-    
-   var systemApps []string 
 
-    err = filepath.Walk(systemDir, func(path string, info fs.FileInfo, err error) error {
-        if err != nil {
-            return fmt.Errorf("error: %v", err)
-        }
+	systemDir := os.Getenv("SystemRoot") + `\System32`
+	appDir := os.Getenv("ProgramFiles")
 
-        if strings.HasSuffix(info.Name(), ".exe") {
-            systemApps = append(systemApps, info.Name())
-        }
+	var systemApps []string
 
-        return nil
-    })
+	err = filepath.Walk(systemDir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return fmt.Errorf("error: %v", err)
+		}
 
-    var apps []string
+		if strings.HasSuffix(info.Name(), ".exe") {
+			systemApps = append(systemApps, info.Name())
+		}
 
-    err = filepath.Walk(appDir, func(path string, info fs.FileInfo, err error) error {
-        if err != nil {
-            return fmt.Errorf("error: %v", err)
-        }
+		return nil
+	})
 
-        if strings.HasSuffix(info.Name(), ".exe") {
-            apps = append(apps, info.Name())
-        }
+	var apps []string
 
-        return err
-    })
+	err = filepath.Walk(appDir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return fmt.Errorf("error: %v", err)
+		}
 
-    err = writeSSlice("systemApps.txt", systemApps)
-    if err != nil {
-    	return 
-    }
+		if strings.HasSuffix(info.Name(), ".exe") {
+			apps = append(apps, info.Name())
+		}
 
-    err = writeSSlice("Apps.txt", apps)
-    if err != nil {
-    	return 
-    }
+		return err
+	})
 
-    return
+	err = writeSSlice("systemApps.txt", systemApps)
+	if err != nil {
+		return
+	}
+
+	err = writeSSlice("Apps.txt", apps)
+	if err != nil {
+		return
+	}
+
+    out.SystemApps = systemApps
+    out.Apps = apps
+
+	return
 }
 
 func writeSSlice(filename string, strings []string) error {
